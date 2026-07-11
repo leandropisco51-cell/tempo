@@ -308,6 +308,12 @@ body {
 
 .search-panel {
     position: relative;
+    z-index: 10;
+}
+
+.gps-panel {
+    position: relative;
+    z-index: 1;
 }
 
 .suggestions-list {

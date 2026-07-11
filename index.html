@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>GEO-WEATHER // GPS & Monitoramento Climático</title>
     
     <!-- Google Fonts -->
@@ -41,7 +41,7 @@
 
         <main class="hud-main">
             <!-- Sidebar de Controles e Informações -->
-            <section class="hud-sidebar">
+            <section id="hud-sidebar" class="hud-sidebar tab-weather">
                 <!-- Painel de Busca -->
                 <div class="glass-panel search-panel">
                     <h2 class="panel-title"><i data-lucide="search"></i> LOCALIZAR COORDENADAS</h2>
@@ -156,6 +156,18 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Tab Bar para Mobile (Visível apenas em dispositivos móveis) -->
+    <div id="mobile-tab-bar" class="mobile-tab-bar">
+        <button id="tab-weather-btn" class="tab-btn active">
+            <i data-lucide="cloud-sun"></i>
+            <span>Clima</span>
+        </button>
+        <button id="tab-gps-btn" class="tab-btn">
+            <i data-lucide="milestone"></i>
+            <span>GPS & Rotas</span>
+        </button>
     </div>
 
     <!-- Leaflet JS -->

@@ -702,6 +702,26 @@ function stopNavigation() {
 startNavBtn.addEventListener('click', startNavigation);
 document.getElementById('stop-nav-btn').addEventListener('click', stopNavigation);
 
+// Lógica de abas do celular (Mobile Bottom Tab Bar)
+const tabWeatherBtn = document.getElementById('tab-weather-btn');
+const tabGpsBtn = document.getElementById('tab-gps-btn');
+const hudSidebar = document.getElementById('hud-sidebar');
+
+if (tabWeatherBtn && tabGpsBtn && hudSidebar) {
+    tabWeatherBtn.addEventListener('click', () => {
+        hudSidebar.classList.remove('tab-gps');
+        hudSidebar.classList.add('tab-weather');
+        tabWeatherBtn.classList.add('active');
+        tabGpsBtn.classList.remove('active');
+    });
+    tabGpsBtn.addEventListener('click', () => {
+        hudSidebar.classList.remove('tab-weather');
+        hudSidebar.classList.add('tab-gps');
+        tabGpsBtn.classList.add('active');
+        tabWeatherBtn.classList.remove('active');
+    });
+}
+
 
 // Estilo customizado para os marcadores de GPS via CSS injetado
 const markerStyle = document.createElement('style');

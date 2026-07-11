@@ -173,6 +173,7 @@ body {
     letter-spacing: 2px;
     color: #fff;
     text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    white-space: nowrap;
 }
 
 .logo .version {
@@ -804,6 +805,15 @@ body {
    RESPONSIVIDADE (MOBILE & PORTRAIT)
    ========================================================================== */
 @media (max-width: 900px) {
+    .hud-header {
+        padding: 0 12px;
+    }
+    
+    .logo h1 {
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+
     .hud-sidebar {
         grid-template-columns: 1fr;
         height: 100%;

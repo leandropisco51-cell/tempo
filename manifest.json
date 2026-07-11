@@ -1,7 +1,7 @@
 {
-  "name": "GEO-WEATHER Telemetria & GPS",
-  "short_name": "GeoWeather",
-  "description": "Aplicativo de Clima, Mapas e Rotas GPS em tempo real",
+  "name": "GPS Abutres",
+  "short_name": "GPSAbutres",
+  "description": "Aplicativo GPS Abutres - Clima e Rotas em Tempo Real",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#060913",

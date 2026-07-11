@@ -625,9 +625,6 @@ function clearTrafficPolylines() {
 
 function startNavigation() {
     if (!currentRouteData) return;
-
-    // Pergunta se o usuário quer rodar uma simulação ou usar a navegação GPS real
-    const useSimulation = confirm("Deseja SIMULAR a rota em movimento? (OK para Simular / CANCELAR para usar o GPS Real do seu celular)");
     
     isNavigating = true;
     gpsNavHud.classList.remove('hidden');
@@ -641,7 +638,6 @@ function startNavigation() {
 
     const coords = currentRouteData.coordinates;
     const instructions = currentRouteData.instructions;
-    let currentCoordsIdx = 0;
 
     if (!markerStart) {
         const customStartIcon = L.divIcon({
@@ -652,78 +648,47 @@ function startNavigation() {
         markerStart = L.marker([coords[0].lat, coords[0].lng], { icon: customStartIcon }).addTo(map);
     }
 
-    if (useSimulation) {
-        showFeedback('Simulação de trajeto iniciada.', 'success');
-        
-        simulationIntervalId = setInterval(() => {
-            if (currentCoordsIdx >= coords.length) {
-                stopNavigation();
-                showFeedback('Destino alcançado (Simulação concluída)!', 'success');
-                return;
-            }
+    // NAVEGAÇÃO REAL COM GPS DO APARELHO
+    showFeedback('GPS Real ativado. Siga a rota...', 'success');
+    navSpeed.innerText = `0 km/h`;
+    
+    if ('geolocation' in navigator) {
+        navigationWatchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const currentPos = { lat, lng };
+                
+                // Move o marcador para a posição real
+                markerStart.setLatLng([lat, lng]);
+                map.setView([lat, lng], 17);
+                
+                // Velocidade real em km/h
+                const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
+                navSpeed.innerText = `${speed} km/h`;
 
-            const currentPos = coords[currentCoordsIdx];
-            markerStart.setLatLng([currentPos.lat, currentPos.lng]);
-            map.setView([currentPos.lat, currentPos.lng], 16);
+                // Acha a coordenada da rota mais próxima
+                let closestIdx = 0;
+                let minDist = Infinity;
+                coords.forEach((coord, idx) => {
+                    const d = map.distance([lat, lng], [coord.lat, coord.lng]);
+                    if (d < minDist) {
+                        minDist = d;
+                        closestIdx = idx;
+                    }
+                });
 
-            const baseSpeed = navTraffic.innerText === 'LIVRE' ? 60 : navTraffic.innerText === 'MODERADO' ? 35 : 12;
-            const randomSpeed = baseSpeed + Math.floor(Math.random() * 11) - 5;
-            navSpeed.innerText = `${Math.max(5, randomSpeed)} km/h`;
-
-            // Atualiza direções
-            updateHUDInstructions(currentPos, coords, instructions, currentCoordsIdx);
-
-            const progressRatio = currentCoordsIdx / coords.length;
-            const totalEtaText = navEta.innerText.split(' ')[0];
-            const totalEta = parseInt(totalEtaText) || 10;
-            const remainingEta = Math.max(1, Math.round(totalEta * (1 - progressRatio)));
-            navEta.innerText = `${remainingEta} min`;
-
-            currentCoordsIdx += Math.max(1, Math.floor(coords.length / 80));
-        }, 1500);
+                // Atualiza instruções
+                updateHUDInstructions(currentPos, coords, instructions, closestIdx);
+            },
+            (err) => {
+                console.warn(err);
+                showFeedback('Erro ao acessar GPS. Certifique-se de que a localização está ativa.', 'error');
+            },
+            { enableHighAccuracy: true }
+        );
     } else {
-        // NAVEGAÇÃO REAL COM GPS DO APARELHO
-        showFeedback('GPS Real ativado. Siga a rota...', 'success');
-        navSpeed.innerText = `0 km/h`;
-        
-        if ('geolocation' in navigator) {
-            navigationWatchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const currentPos = { lat, lng };
-                    
-                    // Move o marcador para a posição real
-                    markerStart.setLatLng([lat, lng]);
-                    map.setView([lat, lng], 17);
-                    
-                    // Velocidade real em km/h
-                    const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
-                    navSpeed.innerText = `${speed} km/h`;
-
-                    // Acha a coordenada da rota mais próxima
-                    let closestIdx = 0;
-                    let minDist = Infinity;
-                    coords.forEach((coord, idx) => {
-                        const d = map.distance([lat, lng], [coord.lat, coord.lng]);
-                        if (d < minDist) {
-                            minDist = d;
-                            closestIdx = idx;
-                        }
-                    });
-
-                    // Atualiza instruções
-                    updateHUDInstructions(currentPos, coords, instructions, closestIdx);
-                },
-                (err) => {
-                    console.warn(err);
-                    showFeedback('Erro ao acessar GPS. Certifique-se de que a localização está ativa.', 'error');
-                },
-                { enableHighAccuracy: true }
-            );
-        } else {
-            showFeedback('Suporte a GPS não disponível neste dispositivo.', 'error');
-        }
+        showFeedback('Suporte a GPS não disponível neste dispositivo.', 'error');
     }
 }
 

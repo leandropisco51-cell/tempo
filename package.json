@@ -1,0 +1,13 @@
+{
+  "name": "geo-weather",
+  "version": "1.0.0",
+  "description": "Aplicativo de Clima, Mapas e Rota GPS",
+  "main": "app.js",
+  "scripts": {
+    "start": "npx http-server -p 8000"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

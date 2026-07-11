@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO-WEATHER // GPS & Monitoramento Climático</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css?v=6">
+</head>
+<body class="light-theme">
+    <div class="app-container">
+        <!-- HUD Superior -->
+        <header class="hud-header">
+            <div class="logo">
+                <i data-lucide="activity" class="neon-icon-alert animate-pulse"></i>
+                <h1>GEO-WEATHER <span class="version">v2.4.0-stable</span></h1>
+            </div>
+            <div class="hud-status">
+                <button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar Modo Claro/Escuro">
+                    <i data-lucide="moon"></i>
+                </button>
+                <span class="pulse-indicator"></span>
+                <span id="current-time">CARREGANDO SISTEMA...</span>
+            </div>
+        </header>
+
+        <main class="hud-main">
+            <!-- Sidebar de Controles e Informações -->
+            <section class="hud-sidebar">
+                <!-- Painel de Busca -->
+                <div class="glass-panel search-panel">
+                    <h2 class="panel-title"><i data-lucide="search"></i> LOCALIZAR COORDENADAS</h2>
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Digite CEP, Cidade ou Bairro..." autocomplete="off">
+                        <button id="search-btn" class="glow-button"><i data-lucide="navigation"></i> BUSCAR</button>
+                    </div>
+                    <div id="search-feedback" class="search-feedback hidden"></div>
+                </div>
+
+                <!-- Painel do Clima (Próximas 24 Horas) -->
+                <div class="glass-panel weather-panel">
+                    <h2 class="panel-title"><i data-lucide="cloud-lightning"></i> TELEMETRIA CLIMÁTICA</h2>
+                    
+                    <!-- Clima Atual -->
+                    <div class="current-weather">
+                        <div class="weather-temp-main">
+                            <span id="current-temp">--°C</span>
+                            <div class="weather-desc-wrapper">
+                                <span id="current-desc">Aguardando local...</span>
+                                <span id="location-name">Nenhum ponto definido</span>
+                            </div>
+                        </div>
+                        <div class="weather-stats">
+                            <div class="stat-item">
+                                <i data-lucide="droplets"></i>
+                                <div>
+                                    <small>Humidade</small>
+                                    <span id="current-humidity">--%</span>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <i data-lucide="wind"></i>
+                                <div>
+                                    <small>Vento</small>
+                                    <span id="current-wind">-- km/h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Previsão 24h (Horizontal) -->
+                    <div class="forecast-container">
+                        <h3><i data-lucide="clock"></i> PREVISÃO 24 HORAS</h3>
+                        <div class="forecast-scroll" id="forecast-scroll">
+                            <div class="forecast-empty">Selecione um local para gerar a telemetria horária.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel do GPS & Rotas -->
+                <div class="glass-panel gps-panel">
+                    <h2 class="panel-title"><i data-lucide="map-pin"></i> GPS & ROTAS</h2>
+                    <div class="route-inputs">
+                        <div class="input-group">
+                            <label for="route-start"><i data-lucide="locate-fixed"></i> Partida:</label>
+                            <div class="input-row">
+                                <input type="text" id="route-start" placeholder="Minha localização ou endereço..." value="Minha Localização Atual">
+                                <button id="my-location-btn" title="Usar localização atual"><i data-lucide="locate"></i></button>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="route-end"><i data-lucide="flag"></i> Destino:</label>
+                            <input type="text" id="route-end" placeholder="Selecione no mapa ou busque acima..." disabled>
+                        </div>
+                        <div class="route-actions">
+                            <button id="route-btn" class="glow-button-secondary" disabled><i data-lucide="milestone"></i> TRAÇAR ROTA</button>
+                            <button id="start-nav-btn" class="glow-button hidden" style="background: linear-gradient(135deg, var(--neon-green) 0%, rgba(57, 255, 20, 0.6) 100%); color: #000; box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);"><i data-lucide="play"></i> INICIAR</button>
+                            <button id="clear-route-btn" class="danger-button hidden"><i data-lucide="trash-2"></i> LIMPAR</button>
+                        </div>
+                    </div>
+                    <div id="route-instructions" class="route-instructions hidden">
+                        <!-- Instruções de rota do GPS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Área do Mapa -->
+            <section class="hud-map-container">
+                <div id="map"></div>
+                <div class="map-overlay">
+                    <!-- HUD de Navegação em Tempo Real (GPS HUD) -->
+                    <div id="gps-nav-hud" class="gps-nav-hud hidden">
+                        <div class="nav-header">
+                            <i data-lucide="navigation" class="nav-icon-dir animate-bounce"></i>
+                            <div class="nav-text">
+                                <span id="nav-next-step">Siga em frente</span>
+                                <small id="nav-next-dist">na rota estabelecida</small>
+                            </div>
+                        </div>
+                        <div class="nav-stats">
+                            <div class="nav-stat">
+                                <span id="nav-speed">0 km/h</span>
+                                <small>VELOCIDADE</small>
+                            </div>
+                            <div class="nav-stat">
+                                <span id="nav-eta">-- min</span>
+                                <small>RESTANTE</small>
+                            </div>
+                            <div class="nav-stat">
+                                <span id="nav-traffic" class="traffic-tag green">LIVRE</span>
+                                <small>TRÂNSITO</small>
+                            </div>
+                        </div>
+                        <button id="stop-nav-btn" class="stop-nav-btn">PARAR NAVEGAÇÃO</button>
+                    </div>
+
+                    <div class="coordinates-hud">
+                        <span>LAT: <span id="hud-lat">--.------</span></span>
+                        <span>LNG: <span id="hud-lng">--.------</span></span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
+    <!-- App Logic -->
+    <script src="app.js?v=6"></script>
+</body>
+</html>

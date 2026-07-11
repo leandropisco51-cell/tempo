@@ -1,0 +1,980 @@
+/* ==========================================================================
+   CSS GLOBAL & VARIÁVEIS (TEMA CYBERPUNK / GLASSMORPHISM)
+   ========================================================================== */
+:root {
+    --bg-deep: #060913;
+    --bg-panel: rgba(13, 20, 38, 0.6);
+    --bg-panel-solid: #0d1426;
+    --border-glow: rgba(0, 240, 255, 0.2);
+    --border-glow-hover: rgba(161, 0, 255, 0.4);
+    
+    --neon-cyan: #00f0ff;
+    --neon-purple: #a100ff;
+    --neon-magenta: #ff007f;
+    --neon-green: #39ff14;
+    
+    --text-primary: #f0f3f8;
+    --text-secondary: #8c9cb8;
+    --text-muted: #53627c;
+    
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --shadow-neon: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+/* Tema Claro (Light Theme) */
+body.light-theme {
+    --bg-deep: #f0f4f8;
+    --bg-panel: rgba(255, 255, 255, 0.75);
+    --bg-panel-solid: #ffffff;
+    --border-glow: rgba(0, 124, 186, 0.2);
+    --border-glow-hover: rgba(138, 43, 226, 0.4);
+    
+    --neon-cyan: #007cba;
+    --neon-purple: #8a2be2;
+    --neon-magenta: #d80066;
+    --neon-green: #2ecc71;
+    
+    --text-primary: #121824;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    
+    --shadow-neon: 0 4px 15px rgba(0, 124, 186, 0.15);
+}
+
+.theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glow);
+    border-radius: 8px;
+    color: var(--neon-cyan);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+    margin-right: 10px;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--neon-cyan);
+    transform: rotate(15deg);
+}
+
+body.light-theme .theme-toggle-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #f39c12;
+}
+
+body.light-theme .logo h1 {
+    color: var(--text-primary);
+    text-shadow: none;
+}
+
+body.light-theme #route-start,
+body.light-theme #route-end,
+body.light-theme #search-input,
+body.light-theme #my-location-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+body.light-theme .route-instructions {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .forecast-card {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-theme .weather-stats {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   LAYOUT & CONTAINER
+   ========================================================================== */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+/* HUD Superior */
+.hud-header {
+    height: 60px;
+    background: linear-gradient(180deg, var(--bg-panel-solid) 0%, var(--bg-deep) 100%);
+    border-bottom: 1px solid var(--border-glow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo h1 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.logo .version {
+    font-size: 0.65rem;
+    color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    vertical-align: middle;
+}
+
+.hud-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--neon-cyan);
+}
+
+.pulse-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: var(--neon-green);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--neon-green);
+    animation: pulse 1.5s infinite alternate;
+}
+
+/* Main Area */
+.hud-main {
+    flex: 1;
+    display: flex;
+    position: relative;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+}
+
+/* Sidebar - Dashboard Climatológico e de Controle */
+.hud-sidebar {
+    width: 100%;
+    height: 100%;
+    padding: 25px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    overflow-y: auto;
+    background: linear-gradient(135deg, var(--bg-panel-solid) 0%, var(--bg-deep) 100%);
+    border-right: none;
+    z-index: 999;
+}
+
+/* Custom Scrollbar para a Sidebar */
+.hud-sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+.hud-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.hud-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-glow);
+    border-radius: 10px;
+}
+.hud-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-cyan);
+}
+
+/* ==========================================================================
+   PAINEIS GLASSMORPHISM (HUD)
+   ========================================================================== */
+.glass-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glow);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    transform: scaleX(0);
+    transition: transform 0.5s ease;
+}
+
+.glass-panel:hover::before {
+    transform: scaleX(1);
+}
+
+.glass-panel:hover {
+    border-color: var(--border-glow-hover);
+    box-shadow: 0 8px 32px 0 rgba(161, 0, 255, 0.15);
+}
+
+.panel-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 8px;
+}
+
+.panel-title i {
+    width: 16px;
+    height: 16px;
+    color: var(--neon-cyan);
+}
+
+/* ==========================================================================
+   COMPONENTES: PAINEL DE BUSCA
+   ========================================================================== */
+.search-box {
+    display: flex;
+    gap: 8px;
+}
+
+#search-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    transition: var(--transition-smooth);
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.05);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+/* Botões */
+.glow-button {
+    background: linear-gradient(135deg, var(--neon-cyan) 0%, rgba(0, 240, 255, 0.6) 100%);
+    border: none;
+    border-radius: 8px;
+    color: var(--bg-deep);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-neon);
+}
+
+.glow-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+    filter: brightness(1.1);
+}
+
+.glow-button-secondary {
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 8px;
+    color: var(--neon-cyan);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+    width: 100%;
+}
+
+.glow-button-secondary:not(:disabled):hover {
+    background: rgba(0, 240, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.glow-button-secondary:disabled {
+    border-color: var(--text-muted);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.danger-button {
+    background: rgba(255, 0, 127, 0.1);
+    border: 1px solid var(--neon-magenta);
+    border-radius: 8px;
+    color: var(--neon-magenta);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+}
+
+.danger-button:hover {
+    background: rgba(255, 0, 127, 0.2);
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
+}
+
+/* Feedback de Busca */
+.search-feedback {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.search-feedback.success {
+    background: rgba(57, 255, 20, 0.1);
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+}
+
+.search-feedback.error {
+    background: rgba(255, 0, 127, 0.1);
+    border: 1px solid var(--neon-magenta);
+    color: var(--neon-magenta);
+}
+
+.search-feedback.loading {
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   COMPONENTES: TELEMETRIA CLIMÁTICA
+   ========================================================================== */
+.current-weather {
+    margin-bottom: 20px;
+}
+
+.weather-temp-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+#current-temp {
+    font-family: var(--font-display);
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.weather-desc-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#current-desc {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--neon-cyan);
+    text-transform: capitalize;
+}
+
+#location-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.weather-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-item i {
+    width: 18px;
+    height: 18px;
+    color: var(--neon-cyan);
+}
+
+.stat-item small {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.stat-item span {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Previsão 24h Scroll */
+.forecast-container h3 {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.forecast-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.forecast-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+.forecast-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.forecast-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-glow);
+    border-radius: 10px;
+}
+
+.forecast-empty {
+    width: 100%;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 15px 0;
+}
+
+.forecast-card {
+    flex: 0 0 65px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-smooth);
+}
+
+.forecast-card:hover {
+    background: rgba(0, 240, 255, 0.05);
+    border-color: rgba(0, 240, 255, 0.3);
+}
+
+.forecast-card .hour {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.forecast-card .temp {
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.forecast-card i {
+    width: 18px;
+    height: 18px;
+    color: var(--neon-cyan);
+}
+
+/* ==========================================================================
+   COMPONENTES: GPS & ROTAS
+   ========================================================================== */
+.route-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.input-group label i {
+    width: 12px;
+    height: 12px;
+}
+
+.input-row {
+    display: flex;
+    gap: 6px;
+}
+
+.input-row input {
+    flex: 1;
+}
+
+#route-start, #route-end {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    transition: var(--transition-smooth);
+}
+
+#route-start:focus, #route-end:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+}
+
+#my-location-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--neon-cyan);
+    cursor: pointer;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+}
+
+#my-location-btn:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--neon-cyan);
+}
+
+.route-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+/* Painel de Instruções de Rota */
+.route-instructions {
+    margin-top: 15px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: rgba(6, 9, 19, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.8rem;
+}
+
+.route-instructions::-webkit-scrollbar {
+    width: 4px;
+}
+.route-instructions::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.route-step {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+}
+
+.route-step:last-child {
+    border-bottom: none;
+}
+
+/* ==========================================================================
+   MAP CONTAINER
+   ========================================================================== */
+.hud-map-container {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: none !important;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-deep);
+}
+
+/* HUD Overlay no Mapa */
+.map-overlay {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.coordinates-hud {
+    background: rgba(6, 9, 19, 0.85);
+    border: 1px solid var(--neon-cyan);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--neon-cyan);
+    display: flex;
+    gap: 15px;
+    box-shadow: var(--shadow-neon);
+    pointer-events: auto;
+}
+
+/* Customizando Leaflet Control Elements para o visual cyberpunk */
+.leaflet-bar {
+    border: 1px solid var(--border-glow) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+.leaflet-bar a {
+    background-color: var(--bg-panel-solid) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    transition: var(--transition-smooth);
+}
+
+.leaflet-bar a:hover {
+    background-color: var(--neon-cyan) !important;
+    color: var(--bg-deep) !important;
+}
+
+/* Customizar container de roteamento no mapa (Leaflet Routing Machine) */
+.leaflet-routing-container {
+    background-color: var(--bg-panel-solid) !important;
+    border: 1px solid var(--border-glow) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-body) !important;
+    border-radius: 8px !important;
+    max-height: 250px !important;
+    width: 280px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-routing-alt {
+    max-height: 200px !important;
+}
+
+/* Esconder o container padrão de rotas se quisermos fazer o nosso */
+.leaflet-routing-container {
+    display: none !important; /* Nós pegamos as instruções programaticamente e jogamos no nosso HUD lateral */
+}
+
+/* ==========================================================================
+   ANIMAÇÕES
+   ========================================================================== */
+@keyframes pulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+        box-shadow: 0 0 4px var(--neon-green);
+    }
+    100% {
+        transform: scale(1.1);
+        opacity: 1;
+        box-shadow: 0 0 12px var(--neon-green);
+    }
+}
+
+.animate-pulse {
+    animation: iconPulse 2s infinite ease-in-out;
+}
+
+@keyframes iconPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; filter: drop-shadow(0 0 5px var(--neon-cyan)); }
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE (MOBILE & PORTRAIT)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .hud-sidebar {
+        grid-template-columns: 1fr;
+        height: 100%;
+        width: 100%;
+        padding: 12px;
+        gap: 12px;
+        border-right: none;
+        border-top: none;
+    }
+    
+    .glass-panel {
+        padding: 12px;
+    }
+    
+    .map-overlay {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .coordinates-hud {
+        font-size: 0.65rem;
+        padding: 5px 8px;
+    }
+
+    .gps-nav-hud {
+        width: calc(100% - 20px) !important;
+        right: 10px !important;
+        left: 10px !important;
+        bottom: 10px !important;
+        position: fixed !important;
+        z-index: 1100;
+    }
+}
+
+/* ==========================================================================
+   GPS HUD & TRAFFIC NAVEGAÇÃO
+   ========================================================================== */
+.gps-nav-hud {
+    background: var(--bg-panel-solid);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 12px;
+    padding: 15px;
+    width: 320px;
+    box-shadow: var(--shadow-neon);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.nav-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 8px;
+}
+
+.nav-icon-dir {
+    width: 28px;
+    height: 28px;
+    color: var(--neon-cyan);
+    transform: rotate(45deg);
+}
+
+.nav-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-text span {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.nav-text small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.nav-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    text-align: center;
+}
+
+.nav-stat {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.light-theme .nav-stat {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.nav-stat span {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.nav-stat small {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.traffic-tag {
+    font-weight: 800;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.traffic-tag.green {
+    color: #2ecc71;
+    text-shadow: 0 0 5px rgba(46, 204, 113, 0.3);
+}
+
+.traffic-tag.yellow {
+    color: #f1c40f;
+    text-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+}
+
+.traffic-tag.red {
+    color: #e74c3c;
+    text-shadow: 0 0 5px rgba(231, 76, 60, 0.3);
+}
+
+.stop-nav-btn {
+    background: linear-gradient(135deg, var(--neon-magenta) 0%, rgba(255, 0, 127, 0.6) 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: var(--transition-smooth);
+}
+
+.stop-nav-btn:hover {
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
+    filter: brightness(1.1);
+}
+
+/* ==========================================================================
+   TELA CHEIA NAVEGAÇÃO GPS
+   ========================================================================== */
+.navigation-active .hud-header {
+    display: none !important;
+}
+
+.navigation-active .hud-sidebar {
+    display: none !important;
+}
+
+.navigation-active .hud-main {
+    height: 100vh !important;
+}
+
+.navigation-active .hud-map-container {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.navigation-active .gps-nav-hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+@media (max-width: 900px) {
+    .navigation-active .gps-nav-hud {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: calc(100% - 20px) !important;
+    }
+}
+
+

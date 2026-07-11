@@ -625,6 +625,9 @@ function clearTrafficPolylines() {
 
 function startNavigation() {
     if (!currentRouteData) return;
+
+    // Pergunta se o usuário quer rodar uma simulação ou usar a navegação GPS real
+    const useSimulation = confirm("Deseja SIMULAR a rota em movimento? (OK para Simular / CANCELAR para usar o GPS Real do seu celular)");
     
     isNavigating = true;
     gpsNavHud.classList.remove('hidden');
@@ -640,8 +643,6 @@ function startNavigation() {
     const instructions = currentRouteData.instructions;
     let currentCoordsIdx = 0;
 
-    showFeedback('Navegação GPS simulada iniciada.', 'success');
-
     if (!markerStart) {
         const customStartIcon = L.divIcon({
             className: 'custom-gps-marker start',
@@ -651,63 +652,104 @@ function startNavigation() {
         markerStart = L.marker([coords[0].lat, coords[0].lng], { icon: customStartIcon }).addTo(map);
     }
 
-    if ('geolocation' in navigator) {
-        navigationWatchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                markerStart.setLatLng([lat, lng]);
-                map.setView([lat, lng], 17);
-                const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
-                navSpeed.innerText = `${speed} km/h`;
-            },
-            (err) => console.warn(err),
-            { enableHighAccuracy: true }
-        );
-    }
-
-    simulationIntervalId = setInterval(() => {
-        if (currentCoordsIdx >= coords.length) {
-            stopNavigation();
-            showFeedback('Destino alcançado!', 'success');
-            return;
-        }
-
-        const currentPos = coords[currentCoordsIdx];
-        markerStart.setLatLng([currentPos.lat, currentPos.lng]);
-        map.setView([currentPos.lat, currentPos.lng], 16);
-
-        const baseSpeed = navTraffic.innerText === 'LIVRE' ? 60 : navTraffic.innerText === 'MODERADO' ? 35 : 12;
-        const randomSpeed = baseSpeed + Math.floor(Math.random() * 11) - 5;
-        navSpeed.innerText = `${Math.max(5, randomSpeed)} km/h`;
-
-        let activeInstruction = instructions[0];
-        let minDist = Infinity;
+    if (useSimulation) {
+        showFeedback('Simulação de trajeto iniciada.', 'success');
         
-        instructions.forEach(inst => {
-            const instCoord = coords[inst.index];
-            if (instCoord) {
-                const d = map.distance([currentPos.lat, currentPos.lng], [instCoord.lat, instCoord.lng]);
-                if (inst.index > currentCoordsIdx && d < minDist) {
-                    minDist = d;
-                    activeInstruction = inst;
-                }
+        simulationIntervalId = setInterval(() => {
+            if (currentCoordsIdx >= coords.length) {
+                stopNavigation();
+                showFeedback('Destino alcançado (Simulação concluída)!', 'success');
+                return;
             }
-        });
 
-        if (activeInstruction) {
-            navNextStep.innerText = activeInstruction.text;
-            navNextDist.innerText = `a ${Math.round(minDist)} metros`;
+            const currentPos = coords[currentCoordsIdx];
+            markerStart.setLatLng([currentPos.lat, currentPos.lng]);
+            map.setView([currentPos.lat, currentPos.lng], 16);
+
+            const baseSpeed = navTraffic.innerText === 'LIVRE' ? 60 : navTraffic.innerText === 'MODERADO' ? 35 : 12;
+            const randomSpeed = baseSpeed + Math.floor(Math.random() * 11) - 5;
+            navSpeed.innerText = `${Math.max(5, randomSpeed)} km/h`;
+
+            // Atualiza direções
+            updateHUDInstructions(currentPos, coords, instructions, currentCoordsIdx);
+
+            const progressRatio = currentCoordsIdx / coords.length;
+            const totalEtaText = navEta.innerText.split(' ')[0];
+            const totalEta = parseInt(totalEtaText) || 10;
+            const remainingEta = Math.max(1, Math.round(totalEta * (1 - progressRatio)));
+            navEta.innerText = `${remainingEta} min`;
+
+            currentCoordsIdx += Math.max(1, Math.floor(coords.length / 80));
+        }, 1500);
+    } else {
+        // NAVEGAÇÃO REAL COM GPS DO APARELHO
+        showFeedback('GPS Real ativado. Siga a rota...', 'success');
+        navSpeed.innerText = `0 km/h`;
+        
+        if ('geolocation' in navigator) {
+            navigationWatchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const currentPos = { lat, lng };
+                    
+                    // Move o marcador para a posição real
+                    markerStart.setLatLng([lat, lng]);
+                    map.setView([lat, lng], 17);
+                    
+                    // Velocidade real em km/h
+                    const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
+                    navSpeed.innerText = `${speed} km/h`;
+
+                    // Acha a coordenada da rota mais próxima
+                    let closestIdx = 0;
+                    let minDist = Infinity;
+                    coords.forEach((coord, idx) => {
+                        const d = map.distance([lat, lng], [coord.lat, coord.lng]);
+                        if (d < minDist) {
+                            minDist = d;
+                            closestIdx = idx;
+                        }
+                    });
+
+                    // Atualiza instruções
+                    updateHUDInstructions(currentPos, coords, instructions, closestIdx);
+                },
+                (err) => {
+                    console.warn(err);
+                    showFeedback('Erro ao acessar GPS. Certifique-se de que a localização está ativa.', 'error');
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            showFeedback('Suporte a GPS não disponível neste dispositivo.', 'error');
         }
+    }
+}
 
-        const progressRatio = currentCoordsIdx / coords.length;
-        const totalEtaText = navEta.innerText.split(' ')[0];
-        const totalEta = parseInt(totalEtaText) || 10;
-        const remainingEta = Math.max(1, Math.round(totalEta * (1 - progressRatio)));
-        navEta.innerText = `${remainingEta} min`;
+// Função auxiliar para atualizar a instrução de direção no HUD
+function updateHUDInstructions(currentPos, coords, instructions, currentIdx) {
+    let activeInstruction = null;
+    let minDist = Infinity;
+    
+    instructions.forEach(inst => {
+        const instCoord = coords[inst.index];
+        if (instCoord && inst.index > currentIdx) {
+            const d = map.distance([currentPos.lat, currentPos.lng], [instCoord.lat, instCoord.lng]);
+            if (d < minDist) {
+                minDist = d;
+                activeInstruction = inst;
+            }
+        }
+    });
 
-        currentCoordsIdx += Math.max(1, Math.floor(coords.length / 80));
-    }, 1500);
+    if (activeInstruction) {
+        navNextStep.innerText = activeInstruction.text;
+        navNextDist.innerText = `a ${Math.round(minDist)} metros`;
+    } else {
+        navNextStep.innerText = "Siga na rota";
+        navNextDist.innerText = "até o destino";
+    }
 }
 
 function stopNavigation() {

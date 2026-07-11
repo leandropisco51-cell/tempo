@@ -36,7 +36,7 @@ const gpsNavHud = document.getElementById('gps-nav-hud');
 const stopNavBtn = document.getElementById('stop-nav-btn');
 const navNextStep = document.getElementById('nav-next-step');
 const navNextDist = document.getElementById('nav-next-dist');
-const navSpeed = document.getElementById('nav-speed');
+const navArrival = document.getElementById('nav-arrival');
 const navEta = document.getElementById('nav-eta');
 const navTraffic = document.getElementById('nav-traffic');
 
@@ -692,6 +692,13 @@ function drawTrafficOverlay(route) {
     const finalEta = originalTimeMins + trafficDelay;
 
     navEta.innerText = `${finalEta} min`;
+
+    // Calcula a hora de chegada
+    const arrivalDate = new Date();
+    arrivalDate.setMinutes(arrivalDate.getMinutes() + finalEta);
+    const arrHours = String(arrivalDate.getHours()).padStart(2, '0');
+    const arrMins = String(arrivalDate.getMinutes()).padStart(2, '0');
+    navArrival.innerText = `${arrHours}:${arrMins}`;
     
     const distanceKms = (route.summary.totalDistance / 1000).toFixed(1);
     routeInstructions.querySelector('.route-summary').innerHTML = `
@@ -734,7 +741,6 @@ function startNavigation() {
 
     // NAVEGAÇÃO REAL COM GPS DO APARELHO
     showFeedback('GPS Real ativado. Siga a rota...', 'success');
-    navSpeed.innerText = `0 km/h`;
     bigSpeedValue.innerText = `0`;
     
     if ('geolocation' in navigator) {
@@ -750,7 +756,6 @@ function startNavigation() {
                 
                 // Velocidade real em km/h
                 const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
-                navSpeed.innerText = `${speed} km/h`;
                 bigSpeedValue.innerText = speed;
 
                 // Acha a coordenada da rota mais próxima

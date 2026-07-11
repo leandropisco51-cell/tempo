@@ -720,10 +720,6 @@ function updateHUDInstructions(currentPos, coords, instructions, currentIdx) {
 function stopNavigation() {
     isNavigating = false;
     gpsNavHud.classList.add('hidden');
-    if (currentRouteData) {
-        startNavBtn.classList.remove('hidden');
-        clearRouteBtn.classList.remove('hidden');
-    }
     routeBtn.disabled = false;
 
     document.body.classList.remove('navigation-active');
@@ -738,6 +734,27 @@ function stopNavigation() {
         clearInterval(simulationIntervalId);
         simulationIntervalId = null;
     }
+
+    // Zerar a localização desejada e limpar rota
+    clearTrafficPolylines();
+    
+    if (routingControl) {
+        map.removeControl(routingControl);
+        routingControl = null;
+    }
+    
+    if (markerEnd) {
+        map.removeLayer(markerEnd);
+        markerEnd = null;
+    }
+    
+    endCoords = null;
+    routeEndInput.value = '';
+    searchInput.value = ''; // Limpa também a pesquisa de sedes/locais
+    routeInstructions.innerHTML = '';
+    routeInstructions.classList.add('hidden');
+    clearRouteBtn.classList.add('hidden');
+    startNavBtn.classList.add('hidden');
 }
 
 startNavBtn.addEventListener('click', startNavigation);

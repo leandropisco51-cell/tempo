@@ -1180,5 +1180,25 @@ body.light-theme .nav-stat {
     display: none !important;
 }
 
+/* Footer de Créditos */
+.app-footer {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px 0;
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 20px;
+    opacity: 0.8;
+}
+
+body.light-theme .app-footer {
+    border-top-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-secondary);
+}
+
 
 

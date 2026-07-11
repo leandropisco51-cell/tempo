@@ -145,7 +145,10 @@ function getUserLocation() {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 startCoords = { lat, lng };
-                routeStartInput.value = "Minha Localização Atual";
+                routeStartInput.value = "Obtendo endereço de partida...";
+                
+                // Executa geocodificação reversa para mostrar a rua/bairro real no campo de partida
+                reverseGeocodeAddress(lat, lng);
                 
                 // Adiciona ou move marcador de partida
                 if (markerStart) {
@@ -175,6 +178,26 @@ function getUserLocation() {
         );
     } else {
         showFeedback('Geolocalização não suportada no seu navegador.', 'error');
+    }
+}
+
+// Auxiliar de Geocodificação Reversa (Lat/Lng -> Texto do Endereço)
+async function reverseGeocodeAddress(lat, lng) {
+    try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data && data.display_name) {
+            const parts = data.display_name.split(',');
+            // Simplifica mostrando os 3 primeiros componentes do endereço (ex: Rua, Bairro, Cidade)
+            const cleanName = parts.slice(0, 3).join(',').trim();
+            routeStartInput.value = cleanName;
+        } else {
+            routeStartInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+    } catch (e) {
+        console.warn('Erro no Nominatim reverso:', e);
+        routeStartInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     }
 }
 

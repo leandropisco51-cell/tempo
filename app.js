@@ -789,5 +789,53 @@ markerStyle.innerHTML = `
 `;
 document.head.appendChild(markerStyle);
 
+// Autocomplete de Sedes ao digitar "sede"
+if (searchInput) {
+    const suggestionsContainer = document.getElementById('sedes-suggestions');
+    
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        
+        if (query.includes('sede')) {
+            suggestionsContainer.innerHTML = '';
+            const sedes = window.SEDES_DATABASE || {};
+            let hasSedes = false;
+            
+            for (const key in sedes) {
+                hasSedes = true;
+                const sede = sedes[key];
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerHTML = `<i data-lucide="map-pin"></i> <div><strong>${sede.nome}</strong><br><small style="color:var(--text-muted); font-size:0.75rem">${sede.endereco}</small></div>`;
+                
+                item.addEventListener('click', () => {
+                    searchInput.value = sede.nome;
+                    suggestionsContainer.classList.add('hidden');
+                    setDestination(sede.lat, sede.lng, sede.nome);
+                    showFeedback(`Sucesso! Localizada a ${sede.nome}`, 'success');
+                });
+                
+                suggestionsContainer.appendChild(item);
+            }
+            
+            if (hasSedes) {
+                suggestionsContainer.classList.remove('hidden');
+                lucide.createIcons();
+            } else {
+                suggestionsContainer.classList.add('hidden');
+            }
+        } else {
+            suggestionsContainer.classList.add('hidden');
+        }
+    });
+
+    // Fecha sugestões ao clicar fora do campo
+    document.addEventListener('click', (e) => {
+        if (suggestionsContainer && !suggestionsContainer.contains(e.target) && e.target !== searchInput) {
+            suggestionsContainer.classList.add('hidden');
+        }
+    });
+}
+
 // Inicialização imediata
 window.onload = initMap;

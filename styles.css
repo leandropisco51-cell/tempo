@@ -306,6 +306,58 @@ body {
     color: var(--neon-cyan);
 }
 
+.search-panel {
+    position: relative;
+}
+
+.suggestions-list {
+    background: var(--bg-panel-solid);
+    border: 1px solid var(--border-glow);
+    border-radius: 8px;
+    margin-top: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    position: absolute;
+    width: calc(100% - 24px);
+    z-index: 1010;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.suggestion-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.light-theme .suggestion-item {
+    color: var(--text-primary);
+    border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--neon-cyan);
+}
+
+.suggestion-item i {
+    width: 14px;
+    height: 14px;
+    color: var(--neon-cyan);
+    flex-shrink: 0;
+}
+
 /* ==========================================================================
    COMPONENTES: PAINEL DE BUSCA
    ========================================================================== */

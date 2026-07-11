@@ -220,6 +220,31 @@ async function handleSearch() {
 
     showFeedback('Processando busca climática e mapeamento...', 'loading');
 
+    // 1. Verificar se a busca é por uma Sede registrada (RAG Local)
+    const normalizedQuery = query.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/[^a-z0-9 ]/g, ""); // remove caracteres especiais
+    
+    let matchedSede = null;
+    const sedes = window.SEDES_DATABASE || {};
+    
+    for (const key in sedes) {
+        const nameNormalized = sedes[key].nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        // Verifica se a busca contém a palavra-chave (ex: "mage") ou o nome completo da sede
+        if (normalizedQuery.includes(key) || nameNormalized.includes(normalizedQuery)) {
+            matchedSede = sedes[key];
+            break;
+        }
+    }
+
+    if (matchedSede) {
+        // Encontrou a sede localmente: define coordenadas instantaneamente sem precisar de geolocalizar externo
+        setDestination(matchedSede.lat, matchedSede.lng, matchedSede.nome);
+        showFeedback(`Sucesso! Localizada a ${matchedSede.nome}`, 'success');
+        return;
+    }
+
     // Valida se a busca se parece com um CEP (Brasil)
     const cepRegex = /^\d{5}-?\d{3}$/;
     if (cepRegex.test(query)) {

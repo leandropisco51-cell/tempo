@@ -1,8 +1,9 @@
-const CACHE_NAME = 'geoweather-cache-v1';
+const CACHE_NAME = 'geoweather-cache-v2';
 const ASSETS = [
   './index.html',
   './styles.css',
   './app.js',
+  './sedes.js',
   './manifest.json',
   './app_icon.jpg'
 ];

@@ -1142,6 +1142,28 @@ body.light-theme .nav-stat {
         height: calc(100% - 60px) !important;
         padding-bottom: 30px !important;
     }
+
+    /* Remover retângulos boxy no celular para criar um visual fluido e unificado */
+    .glass-panel {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 10px 0 !important;
+        overflow: visible !important;
+    }
+
+    .glass-panel::before {
+        display: none !important;
+    }
+
+    /* Forçar a lista de sugestões a ter fundo sólido e se sobrepor no celular */
+    .suggestions-list {
+        width: 100% !important;
+        background: var(--bg-panel-solid) !important;
+        border: 1px solid var(--border-glow) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+        z-index: 1020 !important;
+    }
 }
 
 .navigation-active .mobile-tab-bar {

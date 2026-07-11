@@ -1200,5 +1200,77 @@ body.light-theme .app-footer {
     color: var(--text-secondary);
 }
 
+/* ==========================================================================
+   VELOCÍMETRO FLUTUANTE HUD (PARA MOTOCICLISTAS)
+   ========================================================================== */
+.speedometer-nav-hud {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(6, 9, 19, 0.85);
+    border: 3px solid var(--neon-cyan);
+    border-radius: 50%;
+    width: 110px;
+    height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.5), inset 0 0 15px rgba(0, 240, 255, 0.2);
+    pointer-events: none;
+    animation: fadeIn 0.4s ease;
+    border-left-color: var(--neon-purple);
+    border-bottom-color: var(--neon-magenta);
+    backdrop-filter: blur(8px);
+}
+
+.speedometer-nav-hud .speed-val {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--neon-cyan);
+    line-height: 1;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+.speedometer-nav-hud .speed-lbl {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+/* Ajustes no tema claro para legibilidade */
+body.light-theme .speedometer-nav-hud {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 4px 20px rgba(0, 124, 186, 0.2);
+}
+
+body.light-theme .speedometer-nav-hud .speed-val {
+    color: var(--neon-cyan);
+    text-shadow: none;
+}
+
+body.light-theme .speedometer-nav-hud .speed-lbl {
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .speedometer-nav-hud {
+        top: 15px;
+        right: 15px;
+        width: 100px;
+        height: 100px;
+    }
+    
+    .speedometer-nav-hud .speed-val {
+        font-size: 2.2rem;
+    }
+}
+
 
 

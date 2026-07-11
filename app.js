@@ -40,6 +40,9 @@ const navSpeed = document.getElementById('nav-speed');
 const navEta = document.getElementById('nav-eta');
 const navTraffic = document.getElementById('nav-traffic');
 
+const speedometerNavHud = document.getElementById('speedometer-nav-hud');
+const bigSpeedValue = document.getElementById('big-speed-value');
+
 const hudLat = document.getElementById('hud-lat');
 const hudLng = document.getElementById('hud-lng');
 const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -708,6 +711,7 @@ function startNavigation() {
     
     isNavigating = true;
     gpsNavHud.classList.remove('hidden');
+    speedometerNavHud.classList.remove('hidden');
     startNavBtn.classList.add('hidden');
     clearRouteBtn.classList.add('hidden');
     routeBtn.disabled = true;
@@ -731,6 +735,7 @@ function startNavigation() {
     // NAVEGAÇÃO REAL COM GPS DO APARELHO
     showFeedback('GPS Real ativado. Siga a rota...', 'success');
     navSpeed.innerText = `0 km/h`;
+    bigSpeedValue.innerText = `0`;
     
     if ('geolocation' in navigator) {
         navigationWatchId = navigator.geolocation.watchPosition(
@@ -746,6 +751,7 @@ function startNavigation() {
                 // Velocidade real em km/h
                 const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
                 navSpeed.innerText = `${speed} km/h`;
+                bigSpeedValue.innerText = speed;
 
                 // Acha a coordenada da rota mais próxima
                 let closestIdx = 0;
@@ -800,6 +806,7 @@ function updateHUDInstructions(currentPos, coords, instructions, currentIdx) {
 function stopNavigation() {
     isNavigating = false;
     gpsNavHud.classList.add('hidden');
+    speedometerNavHud.classList.add('hidden');
     routeBtn.disabled = false;
 
     document.body.classList.remove('navigation-active');

@@ -31,14 +31,35 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Ignora chamadas para APIs de terceiros (como previsão do tempo ou mapas)
-  if (e.request.url.includes('api.open-meteo.com') || e.request.url.includes('openstreetmap.org')) {
+  // Ignora chamadas para APIs dinâmicas (como previsão do tempo, roteamento e busca nominatim)
+  if (
+    e.request.url.includes('api.open-meteo.com') || 
+    e.request.url.includes('nominatim.openstreetmap.org') || 
+    e.request.url.includes('router.project-osrm.org') ||
+    e.request.url.includes('viacep.com.br')
+  ) {
     return;
   }
   
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(e.request).then((response) => {
+        // Cacheia dinamicamente bibliotecas de CDN e fontes para uso offline
+        if (
+          e.request.url.includes('unpkg.com') || 
+          e.request.url.includes('fonts.googleapis.com') || 
+          e.request.url.includes('fonts.gstatic.com')
+        ) {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, response.clone());
+            return response;
+          });
+        }
+        return response;
+      });
     })
   );
 });

@@ -139,12 +139,84 @@ function initMap() {
 
     // Clique no mapa define o destino de rota ou ponto de busca
     map.on('click', function(e) {
-        setDestination(e.latlng.lat, e.latlng.lng, `Ponto no Mapa (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
+        const popupContent = `
+            <div style="font-family: 'Outfit', sans-serif; padding: 5px; min-width: 140px;">
+                <strong style="display:block; margin-bottom: 8px; color: #00f0ff; font-size: 13px; text-align: center;">DEFINIR COORDENADAS</strong>
+                <button onclick="window.setStartFromMap(${e.latlng.lat}, ${e.latlng.lng})" style="display:block; width:100%; font-family:'Outfit',sans-serif; font-size:11px; padding:6px; margin-bottom:6px; border:1px solid #00f0ff; border-radius:4px; cursor:pointer; background:rgba(0,240,255,0.1); color:#fff; font-weight:600;">PARTIDA</button>
+                <button onclick="window.setDestinationFromMap(${e.latlng.lat}, ${e.latlng.lng})" style="display:block; width:100%; font-family:'Outfit',sans-serif; font-size:11px; padding:6px; border:none; border-radius:4px; cursor:pointer; background:#00f0ff; color:#000; font-weight:600;">DESTINO</button>
+            </div>
+        `;
+        L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popupContent)
+            .openOn(map);
     });
+
+    // Plota as sedes cadastradas no mapa
+    plotAllSedes();
 
     // Inicia geolocalização do usuário para ponto de partida
     getUserLocation();
 }
+
+
+let sedeMarkers = [];
+
+function plotAllSedes() {
+    // Limpa marcadores anteriores se houver
+    sedeMarkers.forEach(marker => map.removeLayer(marker));
+    sedeMarkers = [];
+    
+    const sedes = window.SEDES_DATABASE || {};
+    for (const key in sedes) {
+        const sede = sedes[key];
+        
+        // Marcador customizado para sede
+        const customSedeIcon = L.divIcon({
+            className: 'custom-gps-marker sede-marker-pin',
+            html: `<div class="marker-pulse-sede"></div>`,
+            iconSize: [22, 22]
+        });
+        
+        const marker = L.marker([sede.lat, sede.lng], { icon: customSedeIcon })
+            .addTo(map)
+            .bindPopup(`
+                <div style="font-family: 'Outfit', sans-serif; padding: 5px;">
+                    <strong style="color: #ff007f;">${sede.nome}</strong><br>
+                    <small style="color: #7f8c8d; display:block; margin-bottom:8px;">${sede.endereco}</small>
+                    <button onclick="window.setDestinationFromMap(${sede.lat}, ${sede.lng}, '${sede.nome}')" style="display:block; width:100%; font-family:'Outfit',sans-serif; font-size:11px; padding:6px; border:none; border-radius:4px; cursor:pointer; background:#00f0ff; color:#000; font-weight:600;">DEFINIR DESTINO</button>
+                </div>
+            `);
+        
+        sedeMarkers.push(marker);
+    }
+}
+
+window.setStartFromMap = function(lat, lng) {
+    startCoords = { lat, lng };
+    routeStartInput.value = "Ponto no Mapa...";
+    reverseGeocodeAddress(lat, lng);
+    
+    if (markerStart) {
+        markerStart.setLatLng([lat, lng]);
+    } else {
+        const customStartIcon = L.divIcon({
+            className: 'custom-gps-marker start',
+            html: `<div class="marker-pulse start-pulse"></div>`,
+            iconSize: [20, 20]
+        });
+        markerStart = L.marker([lat, lng], { icon: customStartIcon }).addTo(map);
+    }
+    
+    checkRouteState();
+    map.closePopup();
+};
+
+window.setDestinationFromMap = function(lat, lng, name) {
+    const label = name || `Ponto no Mapa (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    setDestination(lat, lng, label);
+    map.closePopup();
+};
 
 // 3. Geolocalização do Usuário (GPS Partida)
 function getUserLocation() {
@@ -194,7 +266,11 @@ function getUserLocation() {
 async function reverseGeocodeAddress(lat, lng) {
     try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'GPS-Abutres-App/3.0 (https://github.com/leandropisco51-cell/tempo)'
+            }
+        });
         const data = await response.json();
         if (data && data.display_name) {
             const parts = data.display_name.split(',');
@@ -290,7 +366,11 @@ async function handleSearch() {
 // Auxiliar de Geocodificação Nominatim
 async function geocodeAddress(address) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+        headers: {
+            'User-Agent': 'GPS-Abutres-App/3.0 (https://github.com/leandropisco51-cell/tempo)'
+        }
+    });
     const data = await response.json();
     if (data && data.length > 0) {
         return {
@@ -803,39 +883,53 @@ markerStyle.innerHTML = `
         background-color: #ff007f;
         box-shadow: 0 0 10px #ff007f, 0 0 20px #ff007f;
     }
+    .marker-pulse-sede {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        background-color: #a100ff;
+        box-shadow: 0 0 10px #a100ff, 0 0 20px #a100ff;
+    }
 `;
 document.head.appendChild(markerStyle);
 
-// Autocomplete de Sedes ao digitar "sede"
+// Autocomplete de Sedes ao digitar
 if (searchInput) {
     const suggestionsContainer = document.getElementById('sedes-suggestions');
     
     searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
+        const rawQuery = e.target.value.toLowerCase();
+        const query = rawQuery.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         
-        if (query.includes('sede')) {
+        if (query.length >= 2) {
             suggestionsContainer.innerHTML = '';
             const sedes = window.SEDES_DATABASE || {};
-            let hasSedes = false;
+            let hasMatches = false;
             
             for (const key in sedes) {
-                hasSedes = true;
-                const sede = sedes[key];
-                const item = document.createElement('div');
-                item.className = 'suggestion-item';
-                item.innerHTML = `<i data-lucide="map-pin"></i> <div><strong>${sede.nome}</strong><br><small style="color:var(--text-muted); font-size:0.75rem">${sede.endereco}</small></div>`;
+                const nameNormalized = sedes[key].nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const addressNormalized = sedes[key].endereco.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 
-                item.addEventListener('click', () => {
-                    searchInput.value = sede.nome;
-                    suggestionsContainer.classList.add('hidden');
-                    setDestination(sede.lat, sede.lng, sede.nome);
-                    showFeedback(`Sucesso! Localizada a ${sede.nome}`, 'success');
-                });
-                
-                suggestionsContainer.appendChild(item);
+                if (nameNormalized.includes(query) || addressNormalized.includes(query) || query.includes('sede')) {
+                    hasMatches = true;
+                    const sede = sedes[key];
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.innerHTML = `<i data-lucide="map-pin"></i> <div><strong>${sede.nome}</strong><br><small style="color:var(--text-muted); font-size:0.75rem">${sede.endereco}</small></div>`;
+                    
+                    item.addEventListener('click', () => {
+                        searchInput.value = sede.nome;
+                        suggestionsContainer.classList.add('hidden');
+                        setDestination(sede.lat, sede.lng, sede.nome);
+                        showFeedback(`Sucesso! Localizada a ${sede.nome}`, 'success');
+                    });
+                    
+                    suggestionsContainer.appendChild(item);
+                }
             }
             
-            if (hasSedes) {
+            if (hasMatches) {
                 suggestionsContainer.classList.remove('hidden');
                 lucide.createIcons();
             } else {

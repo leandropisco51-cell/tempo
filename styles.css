@@ -1138,6 +1138,10 @@ body.light-theme .nav-stat {
         display: block !important;
     }
 
+    .hud-sidebar.tab-gps {
+        overflow: visible !important;
+    }
+
     .hud-sidebar {
         height: calc(100% - 60px) !important;
         padding-bottom: 30px !important;

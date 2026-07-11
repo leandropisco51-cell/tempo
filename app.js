@@ -233,11 +233,7 @@ async function handleSearch() {
 // Auxiliar de Geocodificação Nominatim
 async function geocodeAddress(address) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-    const response = await fetch(url, {
-        headers: {
-            'User-Agent': 'GeoWeatherApp/1.0 (leandro.lopes@example.com)'
-        }
-    });
+    const response = await fetch(url);
     const data = await response.json();
     if (data && data.length > 0) {
         return {

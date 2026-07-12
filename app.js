@@ -44,7 +44,7 @@ const speedometerNavHud = document.getElementById('speedometer-nav-hud');
 const bigSpeedValue = document.getElementById('big-speed-value');
 
 const viewRouteDetailsBtn = document.getElementById('view-route-details-btn');
-const routeSummaryCard = document.getElementById('route-summary-card');
+const tabShowRouteBtn = document.getElementById('tab-show-route-btn');
 const routeOptionsModal = document.getElementById('route-options-modal');
 const routeOptionsList = document.getElementById('route-options-list');
 const routeDetailsModal = document.getElementById('route-details-modal');
@@ -574,6 +574,10 @@ function drawRoute() {
         startNavBtn.classList.remove('hidden');
         clearRouteBtn.classList.remove('hidden');
         viewRouteDetailsBtn.classList.remove('hidden');
+        if (tabShowRouteBtn) {
+            tabShowRouteBtn.disabled = false;
+            tabShowRouteBtn.style.opacity = '1';
+        }
         
         showFeedback('Rotas carregadas com sucesso.', 'success');
         
@@ -617,7 +621,10 @@ function clearRoute() {
     endCoords = null;
     routeEndInput.value = '';
     viewRouteDetailsBtn.classList.add('hidden');
-    routeSummaryCard.classList.add('hidden');
+    if (tabShowRouteBtn) {
+        tabShowRouteBtn.disabled = true;
+        tabShowRouteBtn.style.opacity = '0.4';
+    }
     routeOptionsModal.classList.add('hidden');
     routeDetailsModal.classList.add('hidden');
     clearRouteBtn.classList.add('hidden');
@@ -722,12 +729,6 @@ function drawTrafficOverlay(route) {
     const arrMins = String(arrivalDate.getMinutes()).padStart(2, '0');
     navArrival.innerText = `${arrHours}:${arrMins}`;
     
-    const distanceKms = (route.summary.totalDistance / 1000).toFixed(1);
-    routeSummaryCard.innerHTML = `
-        <i data-lucide="info"></i> ROTA GERADA: ${distanceKms} km (~${finalEta} min) <br>
-        <span style="font-size:0.75rem; color:${randomTraffic.color}">Trânsito: ${randomTraffic.label} (+${trafficDelay}m)</span>
-    `;
-    routeSummaryCard.classList.remove('hidden');
     lucide.createIcons();
 }
 
@@ -922,7 +923,10 @@ function stopNavigation() {
     routeEndInput.value = '';
     searchInput.value = ''; // Limpa também a pesquisa de sedes/locais
     viewRouteDetailsBtn.classList.add('hidden');
-    routeSummaryCard.classList.add('hidden');
+    if (tabShowRouteBtn) {
+        tabShowRouteBtn.disabled = true;
+        tabShowRouteBtn.style.opacity = '0.4';
+    }
     routeOptionsModal.classList.add('hidden');
     routeDetailsModal.classList.add('hidden');
     clearRouteBtn.classList.add('hidden');
@@ -1031,9 +1035,12 @@ window.closeRouteDetailsModal = function() {
     routeDetailsModal.classList.add('hidden');
 };
 
-// Bind click event para viewRouteDetailsBtn
+// Bind click event para viewRouteDetailsBtn e tabShowRouteBtn
 if (viewRouteDetailsBtn) {
     viewRouteDetailsBtn.addEventListener('click', window.openRouteDetailsModal);
+}
+if (tabShowRouteBtn) {
+    tabShowRouteBtn.addEventListener('click', window.openRouteDetailsModal);
 }
 
 startNavBtn.addEventListener('click', startNavigation);

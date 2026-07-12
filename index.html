@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" href="app_icon.jpg">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=31">
+    <link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body class="light-theme">
     <div class="app-container">
@@ -33,7 +33,7 @@
         <header class="hud-header">
             <div class="logo">
                 <i data-lucide="activity" class="neon-icon-alert animate-pulse"></i>
-                <h1>GPS Abutres <span class="version">v3.9.0</span></h1>
+                <h1>GPS Abutres <span class="version">v4.0.0</span></h1>
             </div>
             <div class="hud-status">
                 <button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar Modo Claro/Escuro">
@@ -157,7 +157,10 @@
                                 <small>TRÂNSITO</small>
                             </div>
                         </div>
-                        <button id="stop-nav-btn" class="stop-nav-btn">PARAR NAVEGAÇÃO</button>
+                        <div class="nav-hud-actions" style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
+                            <button id="nav-show-route-btn" class="nav-hud-btn" style="flex: 1; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); font-weight: 700; height: 38px; border-radius: 6px; font-family: var(--font-body); font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="map" style="width:14px; height:14px;"></i> VER ROTA</button>
+                            <button id="stop-nav-btn" class="stop-nav-btn" style="flex: 1; margin-top: 0; height: 38px; font-size: 0.8rem; border-radius: 6px; display: flex; align-items: center; justify-content: center;">PARAR</button>
+                        </div>
                     </div>
 
                     <div class="coordinates-hud">
@@ -230,6 +233,6 @@
     <script src="sedes.js?v=13"></script>
     
     <!-- App Logic -->
-    <script src="app.js?v=31"></script>
+    <script src="app.js?v=32"></script>
 </body>
 </html>

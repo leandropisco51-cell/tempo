@@ -45,6 +45,7 @@ const bigSpeedValue = document.getElementById('big-speed-value');
 
 const viewRouteDetailsBtn = document.getElementById('view-route-details-btn');
 const tabShowRouteBtn = document.getElementById('tab-show-route-btn');
+const navShowRouteBtn = document.getElementById('nav-show-route-btn');
 const routeOptionsModal = document.getElementById('route-options-modal');
 const routeOptionsList = document.getElementById('route-options-list');
 const routeDetailsModal = document.getElementById('route-details-modal');
@@ -1035,12 +1036,15 @@ window.closeRouteDetailsModal = function() {
     routeDetailsModal.classList.add('hidden');
 };
 
-// Bind click event para viewRouteDetailsBtn e tabShowRouteBtn
+// Bind click event para viewRouteDetailsBtn, tabShowRouteBtn e navShowRouteBtn
 if (viewRouteDetailsBtn) {
     viewRouteDetailsBtn.addEventListener('click', window.openRouteDetailsModal);
 }
 if (tabShowRouteBtn) {
     tabShowRouteBtn.addEventListener('click', window.openRouteDetailsModal);
+}
+if (navShowRouteBtn) {
+    navShowRouteBtn.addEventListener('click', window.openRouteDetailsModal);
 }
 
 startNavBtn.addEventListener('click', startNavigation);

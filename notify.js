@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 
 const https = require('https');
+const dns = require('dns');
+
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 const CHAT_ID = '8837987148';
 const TOKEN = '8965512753:AAF3UZSDECTJ1jUX1r_DFquUiD0rzsHBVwc';
@@ -19,7 +24,7 @@ const options = {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
-        'Content-Length': data.length
+        'Content-Length': Buffer.byteLength(data)
     }
 };
 

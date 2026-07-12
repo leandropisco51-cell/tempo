@@ -2,6 +2,12 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const dns = require('dns');
+
+// Força o Node.js a priorizar IPv4 sobre IPv6 (resolve bugs de ECONNRESET no Windows)
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 const CHAT_ID = 8837987148;
 const TOKEN = '8965512753:AAF3UZSDECTJ1jUX1r_DFquUiD0rzsHBVwc';
@@ -167,7 +173,8 @@ ${gitStatus || 'Tudo limpo/sincronizado!'}`);
 async function startPolling() {
     while (true) {
         try {
-            const data = await makeRequest(`${BASE_URL}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`);
+            // Usamos timeout=0 para fechar a conexão de imediato e evitar ECONNRESET em conexões restritas
+            const data = await makeRequest(`${BASE_URL}/getUpdates?offset=${lastUpdateId + 1}&timeout=0`);
             if (data.ok && data.result && data.result.length > 0) {
                 for (const update of data.result) {
                     lastUpdateId = update.update_id;
@@ -178,9 +185,9 @@ async function startPolling() {
             }
         } catch (err) {
             console.error('Erro no polling do Telegram:', err.message);
-            // Aguarda 5 segundos antes de tentar novamente para evitar loop infinito rápido
-            await new Promise(r => setTimeout(r, 5000));
         }
+        // Espera 2 segundos antes de verificar novamente
+        await new Promise(r => setTimeout(r, 2000));
     }
 }
 

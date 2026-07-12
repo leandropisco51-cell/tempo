@@ -1272,5 +1272,29 @@ body.light-theme .speedometer-nav-hud .speed-lbl {
     }
 }
 
+/* Oculta os controles de zoom durante a navegação para limpar a tela */
+.navigation-active .leaflet-control-zoom {
+    display: none !important;
+}
+
+/* Estilo para a seta/bússola de navegação */
+.marker-arrow-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+}
+
+.start-arrow {
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 18px solid var(--neon-cyan);
+    filter: drop-shadow(0 0 5px var(--neon-cyan));
+    transition: transform 0.2s ease-out;
+}
+
 
 

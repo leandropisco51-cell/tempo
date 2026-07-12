@@ -63,6 +63,9 @@ let lightTileLayer;
 let isNavigating = false;
 let navigationWatchId = null;
 let lastRecalculateTime = 0;
+let lastLat = null;
+let lastLng = null;
+let currentHeading = 0;
 let simulationIntervalId = null;
 let currentRouteData = null;
 let trafficPolylines = [];
@@ -221,6 +224,20 @@ window.setDestinationFromMap = function(lat, lng, name) {
     setDestination(lat, lng, label);
     map.closePopup();
 };
+
+// Função para calcular o rumo (bearing/heading) entre duas coordenadas
+function calculateBearing(lat1, lng1, lat2, lng2) {
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const lat1Rad = lat1 * Math.PI / 180;
+    const lat2Rad = lat2 * Math.PI / 180;
+    
+    const y = Math.sin(dLng) * Math.cos(lat2Rad);
+    const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+              Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
+              
+    let brng = Math.atan2(y, x) * 180 / Math.PI;
+    return (brng + 360) % 360;
+}
 
 // 3. Geolocalização do Usuário (GPS Partida)
 function getUserLocation() {
@@ -738,13 +755,18 @@ function startNavigation() {
     const coords = currentRouteData.coordinates;
     const instructions = currentRouteData.instructions;
 
-    if (!markerStart) {
-        const customStartIcon = L.divIcon({
-            className: 'custom-gps-marker start',
-            html: `<div class="marker-pulse start-pulse"></div>`,
-            iconSize: [20, 20]
-        });
-        markerStart = L.marker([coords[0].lat, coords[0].lng], { icon: customStartIcon }).addTo(map);
+    // Configura o marcador com ícone de seta/bússola para navegação
+    const navArrowIcon = L.divIcon({
+        className: 'custom-gps-marker start',
+        html: `<div class="marker-arrow-wrapper"><div class="start-arrow" style="transform: rotate(${currentHeading}deg);"></div></div>`,
+        iconSize: [24, 24]
+    });
+    
+    if (markerStart) {
+        markerStart.setIcon(navArrowIcon);
+        markerStart.setLatLng([coords[0].lat, coords[0].lng]);
+    } else {
+        markerStart = L.marker([coords[0].lat, coords[0].lng], { icon: navArrowIcon }).addTo(map);
     }
 
     // NAVEGAÇÃO REAL COM GPS DO APARELHO
@@ -758,9 +780,36 @@ function startNavigation() {
                 const lng = position.coords.longitude;
                 const currentPos = { lat, lng };
                 
+                // Calcula a direção/heading (bússola) com base no movimento ou GPS nativo
+                if (position.coords.heading !== null && !isNaN(position.coords.heading)) {
+                    currentHeading = position.coords.heading;
+                } else if (lastLat !== null && lastLng !== null) {
+                    const distanceMoved = map.distance([lastLat, lastLng], [lat, lng]);
+                    // Apenas atualiza o rumo se houver deslocamento real maior que 2 metros
+                    if (distanceMoved > 2) {
+                        currentHeading = calculateBearing(lastLat, lastLng, lat, lng);
+                    }
+                }
+                
+                lastLat = lat;
+                lastLng = lng;
+
                 // Move o marcador para a posição real
                 markerStart.setLatLng([lat, lng]);
                 map.setView([lat, lng], 17);
+
+                // Rotaciona a seta do marcador de partida para que ela aponte para a direção correta do movimento
+                const arrowEl = document.querySelector('.start-arrow');
+                if (arrowEl) {
+                    arrowEl.style.transform = `rotate(${currentHeading}deg)`;
+                }
+
+                // Rotaciona o container do mapa para que a direção de viagem aponte sempre para a frente (estilo Waze)
+                const mapDiv = document.getElementById('map');
+                if (mapDiv) {
+                    mapDiv.style.transform = `rotate(${-currentHeading}deg) scale(1.3)`;
+                    mapDiv.style.transition = 'transform 0.4s ease-out';
+                }
                 
                 // Velocidade real em km/h
                 const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
@@ -878,6 +927,22 @@ function stopNavigation() {
     routeInstructions.classList.add('hidden');
     clearRouteBtn.classList.add('hidden');
     startNavBtn.classList.add('hidden');
+
+    // Restaura o ícone padrão de partida (pulse)
+    const defaultStartIcon = L.divIcon({
+        className: 'custom-gps-marker start',
+        html: `<div class="marker-pulse start-pulse"></div>`,
+        iconSize: [20, 20]
+    });
+    if (markerStart) {
+        markerStart.setIcon(defaultStartIcon);
+    }
+
+    // Reseta a rotação do mapa
+    const mapDiv = document.getElementById('map');
+    if (mapDiv) {
+        mapDiv.style.transform = 'none';
+    }
 }
 
 startNavBtn.addEventListener('click', startNavigation);

@@ -62,6 +62,7 @@ let lightTileLayer;
 
 let isNavigating = false;
 let navigationWatchId = null;
+let lastRecalculateTime = 0;
 let simulationIntervalId = null;
 let currentRouteData = null;
 let trafficPolylines = [];
@@ -565,12 +566,14 @@ function drawRoute() {
 
         lucide.createIcons();
 
-        // Ajusta o zoom do mapa para englobar toda a rota
-        const bounds = L.latLngBounds([
-            [startCoords.lat, startCoords.lng],
-            [endCoords.lat, endCoords.lng]
-        ]);
-        map.fitBounds(bounds, { padding: [50, 50] });
+        // Ajusta o zoom do mapa para englobar toda a rota apenas se não estiver navegando ativamente
+        if (!isNavigating) {
+            const bounds = L.latLngBounds([
+                [startCoords.lat, startCoords.lng],
+                [endCoords.lat, endCoords.lng]
+            ]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
     });
 
     routingControl.on('routingerror', function(err) {
@@ -758,10 +761,14 @@ function startNavigation() {
                 const speed = position.coords.speed ? Math.round(position.coords.speed * 3.6) : 0;
                 bigSpeedValue.innerText = speed;
 
-                // Acha a coordenada da rota mais próxima
+                // Acha a coordenada da rota mais próxima dinamicamente do objeto global
+                if (!currentRouteData) return;
+                const activeCoords = currentRouteData.coordinates;
+                const activeInstructions = currentRouteData.instructions;
+
                 let closestIdx = 0;
                 let minDist = Infinity;
-                coords.forEach((coord, idx) => {
+                activeCoords.forEach((coord, idx) => {
                     const d = map.distance([lat, lng], [coord.lat, coord.lng]);
                     if (d < minDist) {
                         minDist = d;
@@ -769,8 +776,27 @@ function startNavigation() {
                     }
                 });
 
+                // Verifica se o usuário saiu da rota (distância maior que 50 metros)
+                // com um intervalo mínimo de 12 segundos entre recálculos para evitar sobrecarga de chamadas API
+                const nowMs = Date.now();
+                if (minDist > 50 && (nowMs - lastRecalculateTime > 12000)) {
+                    lastRecalculateTime = nowMs;
+                    showFeedback('Desvio detectado! Recalculando rota...', 'loading');
+                    
+                    // Atualiza as coordenadas de partida para a posição atual
+                    startCoords = { lat, lng };
+                    
+                    // Atualiza os waypoints do Leaflet Routing Control (isso atualiza a rota e chama 'routesfound' automaticamente)
+                    if (routingControl) {
+                        routingControl.setWaypoints([
+                            L.latLng(lat, lng),
+                            L.latLng(endCoords.lat, endCoords.lng)
+                        ]);
+                    }
+                }
+
                 // Atualiza instruções
-                updateHUDInstructions(currentPos, coords, instructions, closestIdx);
+                updateHUDInstructions(currentPos, activeCoords, activeInstructions, closestIdx);
             },
             (err) => {
                 console.warn(err);

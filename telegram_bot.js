@@ -1,6 +1,7 @@
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 const CHAT_ID = 8837987148;
 const TOKEN = '8965512753:AAF3UZSDECTJ1jUX1r_DFquUiD0rzsHBVwc';
@@ -11,13 +12,50 @@ sendMessage('Bot de Controle Iniciado no Servidor! 🚀 Use /ajuda para ver os c
 
 let lastUpdateId = 0;
 
+// Requisições HTTPS nativas e estáveis para Windows
+function makeRequest(url, method = 'GET', data = null) {
+    return new Promise((resolve, reject) => {
+        try {
+            const parsedUrl = new URL(url);
+            const options = {
+                hostname: parsedUrl.hostname,
+                port: 443,
+                path: parsedUrl.pathname + parsedUrl.search,
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            const req = https.request(options, (res) => {
+                let body = '';
+                res.on('data', (chunk) => body += chunk);
+                res.on('end', () => {
+                    try {
+                        resolve(JSON.parse(body));
+                    } catch (e) {
+                        resolve({ ok: false, description: 'Erro ao processar JSON: ' + e.message });
+                    }
+                });
+            });
+
+            req.on('error', (err) => {
+                reject(err);
+            });
+
+            if (data) {
+                req.write(JSON.stringify(data));
+            }
+            req.end();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
 async function sendMessage(text) {
     try {
-        await fetch(`${BASE_URL}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CHAT_ID, text: text })
-        });
+        await makeRequest(`${BASE_URL}/sendMessage`, 'POST', { chat_id: CHAT_ID, text: text });
     } catch (err) {
         console.error('Erro ao enviar mensagem:', err.message);
     }
@@ -129,9 +167,8 @@ ${gitStatus || 'Tudo limpo/sincronizado!'}`);
 async function startPolling() {
     while (true) {
         try {
-            const response = await fetch(`${BASE_URL}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`);
-            const data = await response.json();
-            if (data.ok && data.result.length > 0) {
+            const data = await makeRequest(`${BASE_URL}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`);
+            if (data.ok && data.result && data.result.length > 0) {
                 for (const update of data.result) {
                     lastUpdateId = update.update_id;
                     if (update.message) {

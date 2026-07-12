@@ -43,6 +43,13 @@ const navTraffic = document.getElementById('nav-traffic');
 const speedometerNavHud = document.getElementById('speedometer-nav-hud');
 const bigSpeedValue = document.getElementById('big-speed-value');
 
+const viewRouteDetailsBtn = document.getElementById('view-route-details-btn');
+const routeSummaryCard = document.getElementById('route-summary-card');
+const routeOptionsModal = document.getElementById('route-options-modal');
+const routeOptionsList = document.getElementById('route-options-list');
+const routeDetailsModal = document.getElementById('route-details-modal');
+const routeDetailsList = document.getElementById('route-details-list');
+
 const hudLat = document.getElementById('hud-lat');
 const hudLng = document.getElementById('hud-lng');
 const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -68,6 +75,8 @@ let lastLng = null;
 let currentHeading = 0;
 let simulationIntervalId = null;
 let currentRouteData = null;
+let availableRoutes = [];
+let selectedRouteIndex = 0;
 let trafficPolylines = [];
 
 // Tabela de Códigos do Tempo WMO (Open-Meteo) para Português e Ícones Lucide
@@ -527,8 +536,6 @@ function drawRoute() {
         map.removeControl(routingControl);
     }
 
-    showFeedback('Gerando diretrizes de rota...', 'loading');
-
     routingControl = L.Routing.control({
         waypoints: [
             L.latLng(startCoords.lat, startCoords.lng),
@@ -536,7 +543,10 @@ function drawRoute() {
         ],
         router: L.Routing.osrmv1({
             serviceUrl: 'https://router.project-osrm.org/route/v1',
-            language: 'pt-BR'
+            language: 'pt-BR',
+            routingOptions: {
+                alternatives: true
+            }
         }),
         lineOptions: {
             styles: [
@@ -556,37 +566,22 @@ function drawRoute() {
     // Capturar instruções de rota
     routingControl.on('routesfound', function(e) {
         const routes = e.routes;
-        const summary = routes[0].summary;
-        const instructions = routes[0].instructions;
-        
+        availableRoutes = routes;
+        selectedRouteIndex = 0;
         currentRouteData = routes[0];
-        startNavBtn.classList.remove('hidden');
-
-        // Converter tempo de segundos para minutos legíveis
-        const durationMins = Math.round(summary.totalTime / 60);
-        const distanceKms = (summary.totalDistance / 1000).toFixed(1);
-
-        // Preenche painel customizado de GPS
-        routeInstructions.innerHTML = `
-            <div class="route-summary" style="margin-bottom:10px; font-weight:700; color:#00f0ff;">
-                <i data-lucide="info"></i> ROTA GERADA: ${distanceKms} km (~${durationMins} min)
-            </div>
-            <div class="steps-list">
-                ${instructions.map((inst, index) => `
-                    <div class="route-step">
-                        <strong>${index + 1}.</strong> ${inst.text} <span style="color:#53627c;">(${Math.round(inst.distance)}m)</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        routeInstructions.classList.remove('hidden');
-        clearRouteBtn.classList.remove('hidden');
-        showFeedback('Diretrizes de navegação carregadas com sucesso.', 'success');
         
-        // Calcular e desenhar o Trânsito
+        // Habilita botões de controle
+        startNavBtn.classList.remove('hidden');
+        clearRouteBtn.classList.remove('hidden');
+        viewRouteDetailsBtn.classList.remove('hidden');
+        
+        showFeedback('Rotas carregadas com sucesso.', 'success');
+        
+        // Abre o popup de seleção de rotas para o usuário escolher
+        showRouteOptionsModal(routes);
+        
+        // Calcular e desenhar o Trânsito da rota recomendada inicial
         drawTrafficOverlay(currentRouteData);
-
-        lucide.createIcons();
 
         // Ajusta o zoom do mapa para englobar toda a rota apenas se não estiver navegando ativamente
         if (!isNavigating) {
@@ -621,8 +616,10 @@ function clearRoute() {
     
     endCoords = null;
     routeEndInput.value = '';
-    routeInstructions.innerHTML = '';
-    routeInstructions.classList.add('hidden');
+    viewRouteDetailsBtn.classList.add('hidden');
+    routeSummaryCard.classList.add('hidden');
+    routeOptionsModal.classList.add('hidden');
+    routeDetailsModal.classList.add('hidden');
     clearRouteBtn.classList.add('hidden');
     startNavBtn.classList.add('hidden');
     routeBtn.disabled = true;
@@ -726,10 +723,11 @@ function drawTrafficOverlay(route) {
     navArrival.innerText = `${arrHours}:${arrMins}`;
     
     const distanceKms = (route.summary.totalDistance / 1000).toFixed(1);
-    routeInstructions.querySelector('.route-summary').innerHTML = `
+    routeSummaryCard.innerHTML = `
         <i data-lucide="info"></i> ROTA GERADA: ${distanceKms} km (~${finalEta} min) <br>
         <span style="font-size:0.75rem; color:${randomTraffic.color}">Trânsito: ${randomTraffic.label} (+${trafficDelay}m)</span>
     `;
+    routeSummaryCard.classList.remove('hidden');
     lucide.createIcons();
 }
 
@@ -923,8 +921,10 @@ function stopNavigation() {
     endCoords = null;
     routeEndInput.value = '';
     searchInput.value = ''; // Limpa também a pesquisa de sedes/locais
-    routeInstructions.innerHTML = '';
-    routeInstructions.classList.add('hidden');
+    viewRouteDetailsBtn.classList.add('hidden');
+    routeSummaryCard.classList.add('hidden');
+    routeOptionsModal.classList.add('hidden');
+    routeDetailsModal.classList.add('hidden');
     clearRouteBtn.classList.add('hidden');
     startNavBtn.classList.add('hidden');
 
@@ -943,6 +943,97 @@ function stopNavigation() {
     if (mapDiv) {
         mapDiv.style.transform = 'none';
     }
+}
+
+// Funções para Controle de Modais de Rota
+function showRouteOptionsModal(routes) {
+    availableRoutes = routes;
+    selectedRouteIndex = 0;
+    
+    routeOptionsList.innerHTML = '';
+    
+    routes.forEach((route, idx) => {
+        const durationMins = Math.round(route.summary.totalTime / 60);
+        const distanceKms = (route.summary.totalDistance / 1000).toFixed(1);
+        
+        // Simular trânsito para cada opção
+        const trafficOptions = [
+            { label: 'Trânsito Livre', color: '#2ecc71' },
+            { label: 'Trânsito Moderado', color: '#f1c40f' },
+            { label: 'Trânsito Intenso', color: '#e74c3c' }
+        ];
+        const traffic = idx === 0 ? trafficOptions[0] : trafficOptions[Math.min(idx, trafficOptions.length - 1)];
+        
+        const card = document.createElement('div');
+        card.className = `route-option-card ${idx === 0 ? 'selected' : ''}`;
+        card.dataset.index = idx;
+        card.innerHTML = `
+            <div class="option-details">
+                <span class="option-name">${idx === 0 ? 'Rota Recomendada' : `Rota Alternativa ${idx}`}</span>
+                <span class="option-meta">${distanceKms} km • <span style="color:${traffic.color}; font-weight:600">${traffic.label}</span></span>
+            </div>
+            <div class="option-time">
+                <span class="time-val">${durationMins} min</span>
+                <div class="option-select-indicator"></div>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.route-option-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedRouteIndex = idx;
+            
+            // Desenha o overlay de trânsito correspondente para pré-visualizar
+            drawTrafficOverlay(routes[idx]);
+        });
+        
+        routeOptionsList.appendChild(card);
+    });
+    
+    routeOptionsModal.classList.remove('hidden');
+    lucide.createIcons();
+}
+
+window.closeRouteOptionsModal = function() {
+    routeOptionsModal.classList.add('hidden');
+};
+
+window.confirmRouteSelection = function() {
+    if (availableRoutes.length > 0) {
+        const selectedRoute = availableRoutes[selectedRouteIndex];
+        currentRouteData = selectedRoute;
+        
+        // Desenha o trânsito da rota escolhida
+        drawTrafficOverlay(selectedRoute);
+        
+        showFeedback(`Rota confirmada: ${Math.round(selectedRoute.summary.totalTime / 60)} min`, 'success');
+    }
+    routeOptionsModal.classList.add('hidden');
+};
+
+window.openRouteDetailsModal = function() {
+    if (!currentRouteData) return;
+    
+    const instructions = currentRouteData.instructions;
+    routeDetailsList.innerHTML = `
+        <div class="steps-list" style="max-height: 60vh; overflow-y: auto;">
+            ${instructions.map((inst, index) => `
+                <div class="route-step" style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-primary);">
+                    <strong style="color: var(--neon-cyan);">${index + 1}.</strong> ${inst.text} <span style="color:#53627c;">(${Math.round(inst.distance)}m)</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    routeDetailsModal.classList.remove('hidden');
+};
+
+window.closeRouteDetailsModal = function() {
+    routeDetailsModal.classList.add('hidden');
+};
+
+// Bind click event para viewRouteDetailsBtn
+if (viewRouteDetailsBtn) {
+    viewRouteDetailsBtn.addEventListener('click', window.openRouteDetailsModal);
 }
 
 startNavBtn.addEventListener('click', startNavigation);

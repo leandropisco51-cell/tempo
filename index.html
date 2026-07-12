@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" href="app_icon.jpg">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=27">
+    <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body class="light-theme">
     <div class="app-container">
@@ -33,7 +33,7 @@
         <header class="hud-header">
             <div class="logo">
                 <i data-lucide="activity" class="neon-icon-alert animate-pulse"></i>
-                <h1>GPS Abutres <span class="version">v3.5.0</span></h1>
+                <h1>GPS Abutres <span class="version">v3.6.0</span></h1>
             </div>
             <div class="hud-status">
                 <button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar Modo Claro/Escuro">
@@ -51,7 +51,7 @@
                 <div class="glass-panel search-panel">
                     <h2 class="panel-title"><i data-lucide="search"></i> LOCALIZAR COORDENADAS</h2>
                     <div class="search-box">
-                        <input type="text" id="search-input" placeholder="Digite CEP, Cidade ou Bairro..." autocomplete="off">
+                        <input type="text" id="search-input" placeholder="Para onde vamos?" autocomplete="off">
                         <button id="search-btn" class="glow-button"><i data-lucide="navigation"></i> BUSCAR</button>
                     </div>
                     <div id="sedes-suggestions" class="suggestions-list hidden"></div>
@@ -119,9 +119,8 @@
                             <button id="clear-route-btn" class="danger-button hidden"><i data-lucide="trash-2"></i> LIMPAR</button>
                         </div>
                     </div>
-                    <div id="route-instructions" class="route-instructions hidden">
-                        <!-- Instruções de rota do GPS -->
-                    </div>
+                    <div id="route-summary-card" class="route-summary-card hidden" style="margin-top: 10px; padding: 10px; background: rgba(6, 9, 19, 0.4); border: 1px solid var(--border-glow); border-radius: 8px; font-family: var(--font-body); font-size: 0.85rem; color: var(--neon-cyan); font-weight: 700; text-align: center;"></div>
+                    <button id="view-route-details-btn" class="glow-button-secondary hidden" style="width: 100%; margin-top: 10px;"><i data-lucide="map"></i> VER ROTA</button>
                 </div>
             </section>
 
@@ -187,6 +186,38 @@
         </button>
     </div>
 
+    <!-- Modal de Opções de Rota -->
+    <div id="route-options-modal" class="modal-overlay hidden">
+        <div class="glass-modal modal-content">
+            <header class="modal-header">
+                <h2><i data-lucide="split"></i> OPÇÕES DE ROTA</h2>
+                <button class="close-modal-btn" onclick="window.closeRouteOptionsModal()">&times;</button>
+            </header>
+            <div class="modal-body" id="route-options-list">
+                <!-- Preenchido dinamicamente com as opções de rota -->
+            </div>
+            <footer class="modal-footer">
+                <button class="glow-button" style="width: 100%;" onclick="window.confirmRouteSelection()"><i data-lucide="check"></i> CONFIRMAR ROTA</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes das Instruções da Rota -->
+    <div id="route-details-modal" class="modal-overlay hidden">
+        <div class="glass-modal modal-content">
+            <header class="modal-header">
+                <h2><i data-lucide="map"></i> DIRETRIZES DA ROTA</h2>
+                <button class="close-modal-btn" onclick="window.closeRouteDetailsModal()">&times;</button>
+            </header>
+            <div class="modal-body" id="route-details-list">
+                <!-- Preenchido dinamicamente com as instruções detalhadas -->
+            </div>
+            <footer class="modal-footer">
+                <button class="danger-button" style="width: 100%;" onclick="window.closeRouteDetailsModal()">FECHAR</button>
+            </footer>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Leaflet Routing Machine JS -->
@@ -196,6 +227,6 @@
     <script src="sedes.js?v=13"></script>
     
     <!-- App Logic -->
-    <script src="app.js?v=27"></script>
+    <script src="app.js?v=28"></script>
 </body>
 </html>

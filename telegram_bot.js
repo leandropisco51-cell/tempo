@@ -13,8 +13,19 @@ const CHAT_ID = 8837987148;
 const TOKEN = '8965512753:AAF3UZSDECTJ1jUX1r_DFquUiD0rzsHBVwc';
 const BASE_URL = `https://api.telegram.org/bot${TOKEN}`;
 
+// Carregar chaves de configuração local
+let config = { GEMINI_API_KEY: "" };
+try {
+    const configPath = path.join(__dirname, 'config.json');
+    if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+} catch (e) {
+    console.warn('Erro ao carregar config.json:', e.message);
+}
+
 console.log('Iniciando o Bot de Controle do Telegram...');
-sendMessage('Bot de Controle Iniciado no Servidor! 🚀 Use /ajuda para ver os comandos.');
+sendMessage('Bot de Controle Iniciado no Servidor! 🚀 Use /ajuda para ver os comandos ou envie uma mensagem normal para conversar comigo.');
 
 let lastUpdateId = 0;
 
@@ -79,6 +90,38 @@ function runShellCommand(cmd) {
     });
 }
 
+// Comunicação com a API oficial do Gemini 1.5 Flash
+async function askGemini(question) {
+    const key = config.GEMINI_API_KEY;
+    if (!key || key === 'SUA_API_KEY_AQUI') {
+        return 'Chave de API do Gemini não configurada. Para podermos conversar, crie uma chave gratuita em https://aistudio.google.com/ e configure-a no arquivo config.json do seu projeto!';
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    const payload = {
+        contents: [
+            {
+                role: 'user',
+                parts: [
+                    {
+                        text: `Você é o assistente virtual IA do aplicativo Abutres GPS (desenvolvido por Leandro Pisco). Responda de forma prestativa, direta e curta. Diga que é a IA dele. Pergunta do usuário: ${question}`
+                    }
+                ]
+            }
+        ]
+    };
+
+    try {
+        const res = await makeRequest(url, 'POST', payload);
+        if (res.candidates && res.candidates[0] && res.candidates[0].content && res.candidates[0].content.parts[0]) {
+            return res.candidates[0].content.parts[0].text;
+        }
+        return 'Desculpe, não consegui processar a resposta da IA.';
+    } catch (err) {
+        return `Erro ao falar com a IA: ${err.message}`;
+    }
+}
+
 async function handleCommand(msg) {
     const text = msg.text ? msg.text.trim() : '';
     if (!text) return;
@@ -91,82 +134,89 @@ async function handleCommand(msg) {
     const args = text.split(' ');
     const cmd = args[0].toLowerCase();
 
-    if (cmd === '/start' || cmd === '/ajuda') {
-        const ajudaMsg = `🤖 Comandos Disponíveis:
+    if (cmd.startsWith('/')) {
+        if (cmd === '/start' || cmd === '/ajuda') {
+            const ajudaMsg = `🤖 Comandos Disponíveis:
 /status - Status atual do servidor e versão do App
 /deploy - Puxa a versão mais recente do Git (git pull)
 /versao <numero> - Atualiza a versão do app (ex: /versao 4.0.0) e faz push
 /cmd <comando> - Executa um comando do sistema no servidor`;
-        sendMessage(ajudaMsg);
-    } 
-    else if (cmd === '/status') {
-        try {
-            const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-            const match = indexHtml.match(/<span class="version">([^<]+)<\/span>/);
-            const version = match ? match[1] : 'Não identificada';
-            
-            const gitStatus = await runShellCommand('git status -s');
-            
-            sendMessage(`🖥️ STATUS DO SERVIDOR:
+            sendMessage(ajudaMsg);
+        } 
+        else if (cmd === '/status') {
+            try {
+                const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+                const match = indexHtml.match(/<span class="version">([^<]+)<\/span>/);
+                const version = match ? match[1] : 'Não identificada';
+                
+                const gitStatus = await runShellCommand('git status -s');
+                
+                sendMessage(`🖥️ STATUS DO SERVIDOR:
 • Versão do App: ${version}
 • Git Status:
 ${gitStatus || 'Tudo limpo/sincronizado!'}`);
-        } catch (e) {
-            sendMessage(`Erro ao ler status: ${e.message}`);
-        }
-    } 
-    else if (cmd === '/deploy') {
-        sendMessage('Iniciando deploy (git pull)... 🔄');
-        const output = await runShellCommand('git pull origin main');
-        sendMessage(`📄 RETORNO DO DEPLOY:\n\n${output}`);
-    } 
-    else if (cmd === '/versao') {
-        const novaVersao = args[1];
-        if (!novaVersao) {
-            sendMessage('Por favor, informe a nova versão. Ex: /versao 4.0.0');
-            return;
-        }
-        
-        sendMessage(`Atualizando versão do App para ${novaVersao}... ⚙️`);
-        
-        try {
-            // 1. Atualizar index.html
-            let indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-            
-            // Achar versão antiga
-            const versionMatch = indexHtml.match(/v\d+\.\d+\.\d+/);
-            const versaoAntiga = versionMatch ? versionMatch[0] : 'desconhecida';
-            
-            indexHtml = indexHtml.replace(/v\d+\.\d+\.\d+/g, `v${novaVersao}`);
-            fs.writeFileSync(path.join(__dirname, 'index.html'), indexHtml, 'utf8');
-            
-            // 2. Incrementar cache do service-worker
-            let sw = fs.readFileSync(path.join(__dirname, 'service-worker.js'), 'utf8');
-            const cacheMatch = sw.match(/geoweather-cache-v(\d+)/);
-            if (cacheMatch) {
-                const nextCacheNum = parseInt(cacheMatch[1], 10) + 1;
-                sw = sw.replace(/geoweather-cache-v\d+/g, `geoweather-cache-v${nextCacheNum}`);
-                fs.writeFileSync(path.join(__dirname, 'service-worker.js'), sw, 'utf8');
+            } catch (e) {
+                sendMessage(`Erro ao ler status: ${e.message}`);
+            }
+        } 
+        else if (cmd === '/deploy') {
+            sendMessage('Iniciando deploy (git pull)... 🔄');
+            const output = await runShellCommand('git pull origin main');
+            sendMessage(`📄 RETORNO DO DEPLOY:\n\n${output}`);
+        } 
+        else if (cmd === '/versao') {
+            const novaVersao = args[1];
+            if (!novaVersao) {
+                sendMessage('Por favor, informe a nova versão. Ex: /versao 4.0.0');
+                return;
             }
             
-            sendMessage(`Versão alterada com sucesso de ${versaoAntiga} para v${novaVersao}! Fazendo commit e push no Git... 🚀`);
+            sendMessage(`Atualizando versão do App para ${novaVersao}... ⚙️`);
             
-            const gitOutput = await runShellCommand(`git add . && git commit -m "chore: bump version to v${novaVersao} via Telegram Bot" && git push origin main`);
-            sendMessage(`✅ Deploy concluído!\n\n${gitOutput}`);
-            
-        } catch (err) {
-            sendMessage(`Erro durante o bump de versão: ${err.message}`);
+            try {
+                // 1. Atualizar index.html
+                let indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+                
+                // Achar versão antiga
+                const versionMatch = indexHtml.match(/v\d+\.\d+\.\d+/);
+                const versaoAntiga = versionMatch ? versionMatch[0] : 'desconhecida';
+                
+                indexHtml = indexHtml.replace(/v\d+\.\d+\.\d+/g, `v${novaVersao}`);
+                fs.writeFileSync(path.join(__dirname, 'index.html'), indexHtml, 'utf8');
+                
+                // 2. Incrementar cache do service-worker
+                let sw = fs.readFileSync(path.join(__dirname, 'service-worker.js'), 'utf8');
+                const cacheMatch = sw.match(/geoweather-cache-v(\d+)/);
+                if (cacheMatch) {
+                    const nextCacheNum = parseInt(cacheMatch[1], 10) + 1;
+                    sw = sw.replace(/geoweather-cache-v\d+/g, `geoweather-cache-v${nextCacheNum}`);
+                    fs.writeFileSync(path.join(__dirname, 'service-worker.js'), sw, 'utf8');
+                }
+                
+                sendMessage(`Versão alterada com sucesso de ${versaoAntiga} para v${novaVersao}! Fazendo commit e push no Git... 🚀`);
+                
+                const gitOutput = await runShellCommand(`git add . && git commit -m "chore: bump version to v${novaVersao} via Telegram Bot" && git push origin main`);
+                sendMessage(`✅ Deploy concluído!\n\n${gitOutput}`);
+                
+            } catch (err) {
+                sendMessage(`Erro durante o bump de versão: ${err.message}`);
+            }
+        } 
+        else if (cmd === '/cmd') {
+            const shellCmd = args.slice(1).join(' ');
+            if (!shellCmd) {
+                sendMessage('Envie o comando após o /cmd. Ex: /cmd dir');
+                return;
+            }
+            sendMessage(`Executando: "${shellCmd}"... ⏳`);
+            const output = await runShellCommand(shellCmd);
+            sendMessage(`🖥️ RETORNO DO COMANDO:\n\n${output}`);
         }
-    } 
-    else if (cmd === '/cmd') {
-        const shellCmd = args.slice(1).join(' ');
-        if (!shellCmd) {
-            sendMessage('Envie o comando após o /cmd. Ex: /cmd dir');
-            return;
-        }
-        sendMessage(`Executando: "${shellCmd}"... ⏳`);
-        const output = await runShellCommand(shellCmd);
-        sendMessage(`🖥️ RETORNO DO COMANDO:\n\n${output}`);
+    } else {
+        // Conversa direta com o Gemini
+        sendMessage('Deixe-me pensar... 🤔');
+        const reply = await askGemini(text);
+        sendMessage(reply);
     }
 }
 

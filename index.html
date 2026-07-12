@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" href="app_icon.jpg">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=26">
 </head>
 <body class="light-theme">
     <div class="app-container">
@@ -33,7 +33,7 @@
         <header class="hud-header">
             <div class="logo">
                 <i data-lucide="activity" class="neon-icon-alert animate-pulse"></i>
-                <h1>GPS Abutres <span class="version">v3.3.0</span></h1>
+                <h1>GPS Abutres <span class="version">v3.4.0</span></h1>
             </div>
             <div class="hud-status">
                 <button id="theme-toggle-btn" class="theme-toggle-btn" title="Alternar Modo Claro/Escuro">
@@ -46,7 +46,7 @@
 
         <main class="hud-main">
             <!-- Sidebar de Controles e Informações -->
-            <section id="hud-sidebar" class="hud-sidebar tab-weather">
+            <section id="hud-sidebar" class="hud-sidebar tab-gps">
                 <!-- Painel de Busca -->
                 <div class="glass-panel search-panel">
                     <h2 class="panel-title"><i data-lucide="search"></i> LOCALIZAR COORDENADAS</h2>
@@ -177,11 +177,11 @@
 
     <!-- Tab Bar para Mobile (Visível apenas em dispositivos móveis) -->
     <div id="mobile-tab-bar" class="mobile-tab-bar">
-        <button id="tab-weather-btn" class="tab-btn active">
+        <button id="tab-weather-btn" class="tab-btn">
             <i data-lucide="cloud-sun"></i>
             <span>Clima</span>
         </button>
-        <button id="tab-gps-btn" class="tab-btn">
+        <button id="tab-gps-btn" class="tab-btn active">
             <i data-lucide="milestone"></i>
             <span>GPS & Rotas</span>
         </button>
@@ -196,6 +196,6 @@
     <script src="sedes.js?v=13"></script>
     
     <!-- App Logic -->
-    <script src="app.js?v=25"></script>
+    <script src="app.js?v=26"></script>
 </body>
 </html>

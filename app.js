@@ -408,6 +408,11 @@ function setDestination(lat, lng, name) {
     // Atualizar UI de rotas
     checkRouteState();
     
+    // Traça a rota automaticamente se já tivermos um ponto de partida
+    if (startCoords) {
+        drawRoute();
+    }
+    
     // Buscar telemetria climática
     fetchWeather(lat, lng, name);
 }

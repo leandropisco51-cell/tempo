@@ -1,26 +1,48 @@
 #!/usr/bin/env node
 
+const https = require('https');
+
 const CHAT_ID = '8837987148';
 const TOKEN = '8965512753:AAF3UZSDECTJ1jUX1r_DFquUiD0rzsHBVwc';
 
 const message = process.argv.slice(2).join(' ') || 'Processo finalizado com sucesso! ✅';
 
-fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+const data = JSON.stringify({
+    chat_id: CHAT_ID,
+    text: message
+});
+
+const options = {
+    hostname: 'api.telegram.org',
+    port: 443,
+    path: `/bot${TOKEN}/sendMessage`,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: message
-    })
-})
-.then(res => res.json())
-.then(data => {
-    if (data.ok) {
-        console.log('Notificação enviada ao Telegram com sucesso! 🚀');
-    } else {
-        console.error('Erro ao enviar notificação:', data.description);
+    headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
     }
-})
-.catch(err => {
+};
+
+const req = https.request(options, (res) => {
+    let body = '';
+    res.on('data', (chunk) => body += chunk);
+    res.on('end', () => {
+        try {
+            const json = JSON.parse(body);
+            if (json.ok) {
+                console.log('Notificação enviada ao Telegram com sucesso! 🚀');
+            } else {
+                console.error('Erro ao enviar notificação:', json.description);
+            }
+        } catch (e) {
+            console.error('Erro ao decodificar resposta do Telegram:', e.message);
+        }
+    });
+});
+
+req.on('error', (err) => {
     console.error('Erro de conexão com o Telegram:', err.message);
 });
+
+req.write(data);
+req.end();
